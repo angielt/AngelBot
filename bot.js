@@ -4,40 +4,54 @@ const Discord = require('discord.js');
 const data = require('./response.json');
 
 const bot = new Discord.Client({disableEveryone: true})
+const sql = require("sqlite");
+sql.open("./score.sqlite");
+
 var heart = 0;
 var random = 2;
-var gifs;
+var insultGifs;
+var complimentGifs;
 
 bot.on("ready", async () => {
   console.log(`${bot.user.username} is online! `)
-  bot.user.setActivity("with the Devil's heart");
+  bot.user.setActivity("with your sins");
 })
 bot.login(auth.token);
+// query gifs
+httpGetInsults("https://api.tenor.com/v1/search?q=sad+anime&media_filter=minimal",processInsults);
+httpGetCompliments("https://api.tenor.com/v1/search?q=cute+anime&media_filter=minimal", processCompliments) ;
 
-httpGetAsync("https://api.tenor.com/v1/search?q=pout+anime&media_filter=minimal",tenorCallback_searchSuggestion);
-
+// message
 bot.on('message', async message => {
   let messageArray = message.content.split(" ");
   let cmd = messageArray[0];
-  if(cmd == `!msg`){ // testing
-    let emb = new Discord.RichEmbed()
-    .setDescription("PLZ WORK OMG")
-    .setColor("#b8d8fcs");
-    return message.channel.send(emb);
-  }
-  else if (cmd == `!heart`){ // testing
+  if (cmd == `!heart`){ // for testing
     let emb = new Discord.RichEmbed()
     .setDescription(message.author.username + " !" )
     .setColor("#b8d8fcs")
-    .setImage(gifs[Math.floor((Math.random() * gifs.length) )].media[0].tinygif.url);
     return message.channel.send(emb);
   }
+  if (message.channel.type === "dm") return; // Ignore DM channels.
+  // friend scores
+
+
+
+  //angel responses to positivity and negativity
   for(i = 0 ; i < data.insults.length; i++){
    if(message.content.includes(data.insults[i])){
      let emb = new Discord.RichEmbed()
      .setDescription(data.insult_res[Math.floor((Math.random() * data.insult_res.length) )] )
      .setColor("#b8d8fcs")
-     .setImage("https://media.tenor.com/images/46c9b8da42a62778fb37f89513c8af0e/tenor.gif");
+     .setImage(insultGifs.results[Math.floor((Math.random() * insultGifs.results.length) )].media[0].tinygif.url);
+     return message.channel.send(emb);
+     heart = 0;
+     break;
+   }
+   if(message.content.includes(data.compliments[i])){
+     let emb = new Discord.RichEmbed()
+     .setDescription(data.compliment_res[Math.floor((Math.random() * data.compliment_res.length) )] )
+     .setColor("#f4e842")
+     .setImage(complimentGifs.results[Math.floor((Math.random() * complimentGifs.results.length) )].media[0].tinygif.url);
      return message.channel.send(emb);
      heart = 0;
      break;
@@ -46,7 +60,7 @@ bot.on('message', async message => {
 
 });
 
-function httpGetAsync(theUrl, callback)
+function httpGetInsults(theUrl, callback)
 {
     // create the request object
     var xmlHttp = new XMLHttpRequest();
@@ -59,7 +73,6 @@ function httpGetAsync(theUrl, callback)
             callback(xmlHttp.responseText);
         }
     }
-
     // open as a GET call, pass in the url and set async = True
     xmlHttp.open("GET", theUrl, true);
 
@@ -69,10 +82,36 @@ function httpGetAsync(theUrl, callback)
     return;
 }
 
-function tenorCallback_searchSuggestion(responsetext)
+function processInsults(responsetext)
 {
     var response_objects = JSON.parse(responsetext);
-    gifs = response_objects['results'];
-    console.log(gifs[0].media[0].tinygif.url);
+    insultGifs = response_objects;
+}
 
+function httpGetCompliments(theUrl, callback)
+{
+    // create the request object
+    var xmlHttp = new XMLHttpRequest();
+
+    // set the state change callback to capture when the response comes in
+    xmlHttp.onreadystatechange = function()
+    {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+        {
+            callback(xmlHttp.responseText);
+        }
+    }
+    // open as a GET call, pass in the url and set async = True
+    xmlHttp.open("GET", theUrl, true);
+
+    // call send with no params as they were passed in on the url string
+    xmlHttp.send(null);
+
+    return;
+}
+
+function processCompliments(responsetext)
+{
+    var response_objects = JSON.parse(responsetext);
+    complimentGifs = response_objects;
 }
