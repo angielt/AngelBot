@@ -31,14 +31,30 @@ bot.on('message', async message => {
     .setColor("#b8d8fcs")
     return message.channel.send(emb);
   }
-  if (message.channel.type === "dm") return; // Ignore DM channels.
+  if (message.channel.type === "dm") {
+    message.reply("Don't message me! Message your friends! D:<");
+    return; // Ignore DM channels.
+  }
   // friend scores
-
+//   sql.get(`SELECT * FROM scores WHERE userId = "${message.author.id}"`).then(row => { //table exists
+//     if (!row) {
+//       sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [message.author.id, 0, 0]);
+//     } else {
+//       //sql.run(`UPDATE scores SET points = ${row.points + 1} WHERE userId = ${message.author.id}`);
+//     }
+//
+//   }).catch(() => { // table does not already exist
+//       console.error; // log errors
+//       sql.run("CREATE TABLE IF NOT EXISTS scores (userId TEXT, points INTEGER, level INTEGER)").then(() => {
+//       sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [message.author.id, 0, 0]);
+// });
+//   });
 
 
   //angel responses to positivity and negativity
   for(i = 0 ; i < data.insults.length; i++){
    if(message.content.includes(data.insults[i])){
+     updatePoints(message.author.id, -10);
      let emb = new Discord.RichEmbed()
      .setDescription(data.insult_res[Math.floor((Math.random() * data.insult_res.length) )] )
      .setColor("#b8d8fcs")
@@ -48,10 +64,12 @@ bot.on('message', async message => {
      break;
    }
    if(message.content.includes(data.compliments[i])){
+     updatePoints(message.author.id, 10);
      let emb = new Discord.RichEmbed()
      .setDescription(data.compliment_res[Math.floor((Math.random() * data.compliment_res.length) )] )
      .setColor("#f4e842")
      .setImage(complimentGifs.results[Math.floor((Math.random() * complimentGifs.results.length) )].media[0].tinygif.url);
+
      return message.channel.send(emb);
      heart = 0;
      break;
@@ -59,6 +77,17 @@ bot.on('message', async message => {
  }
 
 });
+
+function updatePoints(user, value){
+  sql.get("SELECT * FROM scores WHERE userId =" + user).then(row => {
+    sql.run("UPDATE scores SET points =" + (row.points + value) + " WHERE userId = "+ user);
+  }).catch(() => {
+    console.error;
+    sql.run("CREATE TABLE IF NOT EXISTS scores (userId TEXT, points INTEGER, level INTEGER)").then(() => { // should not run
+    sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [user, value , 0]);
+  });
+});
+}
 
 function httpGetInsults(theUrl, callback)
 {
