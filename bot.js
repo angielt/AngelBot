@@ -25,6 +25,10 @@ httpGetCompliments("https://api.tenor.com/v1/search?q=cute+anime&media_filter=mi
 bot.on('message', async message => {
   let messageArray = message.content.split(" ");
   let cmd = messageArray[0];
+
+  if (cmd == `!score`){ // for testing
+    sendScore(message);
+  }
   if (cmd == `!heart`){ // for testing
     let emb = new Discord.RichEmbed()
     .setDescription(message.author.username + " !" )
@@ -32,23 +36,9 @@ bot.on('message', async message => {
     return message.channel.send(emb);
   }
   if (message.channel.type === "dm") {
-    message.reply("Don't message me! Message your friends! D:<");
+  //  message.reply("Don't message me! Message your friends! D:<");
     return; // Ignore DM channels.
   }
-  // friend scores
-//   sql.get(`SELECT * FROM scores WHERE userId = "${message.author.id}"`).then(row => { //table exists
-//     if (!row) {
-//       sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [message.author.id, 0, 0]);
-//     } else {
-//       //sql.run(`UPDATE scores SET points = ${row.points + 1} WHERE userId = ${message.author.id}`);
-//     }
-//
-//   }).catch(() => { // table does not already exist
-//       console.error; // log errors
-//       sql.run("CREATE TABLE IF NOT EXISTS scores (userId TEXT, points INTEGER, level INTEGER)").then(() => {
-//       sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [message.author.id, 0, 0]);
-// });
-//   });
 
 
   //angel responses to positivity and negativity
@@ -87,6 +77,24 @@ function updatePoints(user, value){
     sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [user, value , 0]);
   });
 });
+}
+
+function sendScore(mess){
+  sql.get("SELECT * FROM scores WHERE userId =" + mess.author.id).then(row => {
+  //  console.log(row.points);
+    var points = 0 ;
+    if (row) points = row.points;
+    let emb = new Discord.RichEmbed()
+    .setDescription(mess.author.username + ", your angelscore is " + points )
+    .setColor("#b8d8fcs");
+    return mess.channel.send(emb);
+  }).catch(() => {
+    console.error;
+    sql.run("CREATE TABLE IF NOT EXISTS scores (userId TEXT, points INTEGER, level INTEGER)").then(() => { // should not run
+    sql.run("INSERT INTO scores (userId, points, level) VALUES (?, ?, ?)", [user, 0 , 0]);
+    return 0;
+  });
+  });
 }
 
 function httpGetInsults(theUrl, callback)
